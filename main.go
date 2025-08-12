@@ -196,6 +196,10 @@ func main(){
 	if exportDir==""{
 		exportDir="./backups";
 	}
+	// Ensure export directory exists
+	if err := os.MkdirAll(exportDir, 0755); err != nil {
+		log.Fatalf("Failed to create export directory %s: %v", exportDir, err)
+	}
 	
 
 	// MySQL
@@ -233,7 +237,7 @@ func main(){
 	if mongo_uri==""{
 		log.Print("MongoDB uri is not set, no backup will be done")
 	}else{
-		file:=filepath.Join(exportDir, fmt.Sprintf("./mongo-%s.sql.gz", time.Now().Format("2006-01-02")))
+		file:=filepath.Join(exportDir, fmt.Sprintf("./mongo-%s.archive.gz", time.Now().Format("2006-01-02")))
 		BackupMongoDb(mongo_uri, file)
 		err := s3Client.UploadFile(ctx, "mongo", file)
 		if err!=nil{

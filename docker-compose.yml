@@ -68,8 +68,6 @@ services:
       MONGO_URI: mongodb://root:example@mongo:27017/?authSource=admin
 
       EXPORT_DIR: /backups
-    volumes:
-      - ./backups:/backups
     
 
 volumes:
