@@ -1,4 +1,4 @@
-# docker-database-backup
+# Docker Database Backup to AWS-S3
 
 Containerized, one-shot backup tool for MySQL/MariaDB, PostgreSQL, and MongoDB with upload to S3-compatible storage.
 
@@ -10,15 +10,23 @@ It runs the appropriate dump tool(s), gzips the result, stores it locally, and u
 
 ```bash
 docker run --rm \
-  --network database_network
-  -e MYSQL_URI='mysql://user:pass@db.example.com:3306' \
-  -e POSTGRES_URI='postgres://user:pass@db.example.com:5432/postgres' \
-  -e MONGO_URI='mongodb://user:pass@db.example.com:27017' \
-  -e S3_BUCKET='my-backups' \
-  -e AWS_ACCESS_KEY_ID='AKIA...' \
-  -e AWS_SECRET_ACCESS_KEY='...' \
-  -e AWS_REGION='eu-central-1' \
-  -e EXPORT_DIR='/backups' \
+  --network database_network \
+  -e MYSQL_HOST=mysql \
+  -e MYSQL_USER=root \
+  -e MYSQL_PWD=example \
+  -e POSTGRES_HOST=postgres \
+  -e POSTGRES_USER=postgres \
+  -e PGPASSWORD=example \
+  -e MONGO_HOST=mongo \
+  -e MONGO_USER=root \
+  -e MONGO_PASS=example \
+  -e S3_BUCKET=my-backups \
+  -e S3_ENDPOINT=http://minio:9000 \
+  -e S3_FORCE_PATH_STYLE=true \
+  -e AWS_ACCESS_KEY_ID=minio \
+  -e AWS_SECRET_ACCESS_KEY=minio12345 \
+  -e AWS_REGION=us-east-1 \
+  -e EXPORT_DIR=/backups \
   ghcr.io/m1na19/docker-database-backup:latest
 ```
 
@@ -31,25 +39,26 @@ docker run --rm \
 
 ## Environment variables
 
-| Variable                | Required         | Example                                                          | Notes                                                                                                                                                  |
-| ----------------------- | ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `MYSQL_URI`             | No\*             | `mysql://user:pass@host:3306`                                    | Set to enable MySQL backup. If unset, MySQL backup is skipped.                                                                                         |
-| `POSTGRES_URI`          | No\*             | `postgres://user:pass@host:5432/postgres`                        |Set to enable PostgreSQL backup. If unset, PostgreSQL backup is skipped.                                                                                                    |
-| `MONGO_URI`             | No\*             | `mongodb://user:pass@host:27017`                                 | Set to enable MongoDB backup. If unset, MongoDB backup is skipped.                                                                                                                          |
-| `EXPORT_DIR`            | No               | `/backups`                                                       | Local directory inside the container where dumps are written. Default: `./backups` (relative to container’s CWD). If folder does not exist one is created |
-| `S3_BUCKET`             | Yes               | `my-backups`                                                     | Uploads each dump to this bucket.                                                                                                              |
-| `S3_ENDPOINT`           | Yes               | `https://s3.eu-central-1.amazonaws.com` or `https://minio.local` | Custom endpoint (for MinIO, etc.).                                                                                                            |
-| `S3_FORCE_PATH_STYLE`   | No               | `true`/`false`                                                   | Use path-style URLs (often required by MinIO).                                                                                                         |
-| `AWS_ACCESS_KEY_ID`     | Yes |                                                                  | Standard AWS credentials (or use an instance/role).                                                                                                    |
-| `AWS_SECRET_ACCESS_KEY` | Yes |                                                                  |                                                                                                                                                        |
-| `AWS_REGION`            | Yes | `eu-central-1`                                                   | Needed by AWS SDK when using AWS S3.                                                                                                                   |
+| Variable          | Required | Example                   | Notes                                                                       |
+| ----------------- | -------- | ------------------------- | --------------------------------------------------------------------------- |
+| `MYSQL_HOST` + `MYSQL_USER` | No\* | `localhost` + `root` | Set to enable MySQL backup. Backup is skipped if unset.                      
+| `MYSQL_PORT` | No | `3306` | Defaults to `3306` if unset. |
+| `MYSQL_PWD` + `MYSQL_PASS_FILE` | Yes | `example`  + `/app/db_pass.txt` | One of them has to be provided. If both are given, it uses the password in the file |
+| `POSTGRES_HOST` + `POSTGRES_USER` | No\* | `localhost` + `postgres` | Set to enable PostgreSQL backup. Backup is skipped if unset.                      
+| `POSTGRES_PORT` | No | `5432` | Defaults to `5432` if unset. |
+| `PGPASSWORD` + `POSTGRES_PASS_FILE` | Yes | `example`  + `/app/db_pass.txt` | One of them has to be provided. If both are given, it uses the password in the file |
+| `MONGO_HOST` + `MONGO_USER` | No\* | `localhost` + `root` | Set to enable MongoDB backup. Backup is skipped if unset.                      
+| `MONGO_PORT` | No | `27017` | Defaults to `27017` if unset. |
+| `MONGO_PASS` + `MONGO_PASS_FILE` | Yes | `example`  + `/app/db_pass.txt` | One of them has to be provided. If both are given, it uses the password in the file |
+| `EXPORT_DIR` | No | /backups | Directory inside container for dumps (created if missing). |
+| `S3_BUCKET` | Yes | my-backups | Uploads each dump to this bucket. |
+| `S3_ENDPOINT` | Yes | https://s3.eu-central-1.amazonaws.com or http://minio:9000 | Custom S3-compatible endpoint. |
+| `S3_FORCE_PATH_STYLE` | No | true | Use path-style URLs (often required by MinIO). |
+| `AWS_ACCESS_KEY_ID` | Yes | minio | Standard AWS/MinIO access key. |
+| `AWS_SECRET_ACCESS_KEY` | Yes | minio12345 | AWS/MinIO secret key. |
+| `AWS_REGION` | Yes | us-east-1 | AWS region (still required for MinIO). |                                                                                         |
 ## docker-compose
 [View docker-compose.yml](./docker-compose.yml)
-
-## Notes & gotchas
-* **Networking:** The container must be able to reach your databases (consider Docker networks, VPNs, or security groups).
-* **Mongo output format:** It’s a compressed `mongodump` **archive** (one file). Restore with `mongorestore --gzip --archive=FILE`.
-* **S3 credentials/region:** If uploading to AWS S3, set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION`. For MinIO/custom S3, use `S3_ENDPOINT` and (usually) `S3_FORCE_PATH_STYLE=true`.
 
 ## Restore
 

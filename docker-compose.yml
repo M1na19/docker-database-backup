@@ -1,5 +1,7 @@
 version: "3.9"
-
+secrets:
+  db_password:
+    environment: DB_PASS
 services:
   minio:
     image: minio/minio:latest
@@ -53,6 +55,8 @@ services:
       - mysql
       - mongo
       - minio
+    secrets:
+      - db_password
     environment:
       # S3 / MinIO
       AWS_ACCESS_KEY_ID: minio
@@ -63,10 +67,33 @@ services:
       S3_FORCE_PATH_STYLE: "true"
 
       # DB URIs
-      MYSQL_URI: mysql://root:example@mysql:3306/
-      POSTGRES_URI: postgresql://postgres:example@postgres:5432/?sslmode=disable
-      MONGO_URI: mongodb://root:example@mongo:27017/?authSource=admin
+      #   MYSQL
+      MYSQL_HOST: mysql
+      MYSQL_PORT: # optional, set to default
+      MYSQL_USER: root
 
+      #   POSTGRES
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: # optional, set to default
+      POSTGRES_USER: postgres
+
+      #   MONGO
+      MONGO_HOST: mongo
+      MONGO_PORT: # optional, set to default
+      MONGO_USER: root
+
+      # Passwords/Secrets
+      #   Option 1:
+      # MYSQL_PWD: example
+      # PGPASSWORD: example
+      # MONGO_PASS: example
+
+      #   Option 2(for secrets):
+      MYSQL_PASS_FILE: /run/secrets/db_password
+      POSTGRES_PASS_FILE: /run/secrets/db_password
+      MONGO_PASS_FILE: /run/secrets/db_password
+
+      # App Config
       EXPORT_DIR: /backups
     
 
