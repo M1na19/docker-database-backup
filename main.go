@@ -83,10 +83,11 @@ func BackupMysql(cred DBCredentials, save_path string){
 		"--host=" + cred.host,
 		"--port=" + cred.port,
 		"--user=" + cred.user,
+		"--ssl",
 	}
 
 	cmd:=exec.Command(
-		"mysqldump",
+		"mariadb-dump",
 		args...
 	)
 
