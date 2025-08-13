@@ -94,7 +94,8 @@ services:
 
       # App Config
       EXPORT_DIR: /backups
-    
+    volumes:
+      - ./backups:/backups
 
 volumes:
   minio-data:

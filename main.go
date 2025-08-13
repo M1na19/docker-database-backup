@@ -100,8 +100,17 @@ func BackupMysql(cred DBCredentials, save_path string){
 	// Gzip file before write
 	gzWriter:=gzip.NewWriter(exportFile)
 
-	defer gzWriter.Close()
-	defer exportFile.Close()
+	defer func(){
+		err:=gzWriter.Close()
+		if err!=nil{
+			log.Fatalf("Could not archive file: %v", err)
+		}
+
+		err=exportFile.Close()
+		if err!=nil{
+			log.Fatalf("Could not close file: %v", err)
+		}
+	}()
 
 	cmd.Stdout=gzWriter
 	cmd.Stderr=os.Stderr
@@ -129,8 +138,17 @@ func BackupPostgres(cred DBCredentials, save_path string){
 	// Gzip file before write
 	gzWriter:=gzip.NewWriter(exportFile)
 
-	defer gzWriter.Close()
-	defer exportFile.Close()
+	defer func(){
+		err:=gzWriter.Close()
+		if err!=nil{
+			log.Fatalf("Could not archive file: %v", err)
+		}
+
+		err=exportFile.Close()
+		if err!=nil{
+			log.Fatalf("Could not close file: %v", err)
+		}
+	}()
 
 
 	cmd.Stdout=gzWriter
